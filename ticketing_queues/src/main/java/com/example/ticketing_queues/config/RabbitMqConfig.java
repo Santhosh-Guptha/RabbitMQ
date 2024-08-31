@@ -21,8 +21,17 @@ public class RabbitMqConfig {
     }
 
     @Bean
+    public DirectExchange deadLetterExchange() {
+        return new DirectExchange("dead_letter_exchange");
+    }
+
+    @Bean
     public Queue crmQueue() {
-        return new Queue(properties.getQueue().getCrm());
+        return QueueBuilder.durable(properties.getQueue().getCrm())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -35,7 +44,11 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue helpdeskQueue() {
-        return new Queue(properties.getQueue().getHelpdesk());
+        return QueueBuilder.durable(properties.getQueue().getHelpdesk())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -48,7 +61,11 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue fieldmanagerQueue() {
-        return new Queue(properties.getQueue().getFieldmanager());
+        return QueueBuilder.durable(properties.getQueue().getFieldmanager())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -61,7 +78,11 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue fieldrepresentativeQueue() {
-        return new Queue(properties.getQueue().getFieldrepresentative());
+        return QueueBuilder.durable(properties.getQueue().getFieldrepresentative())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -74,7 +95,7 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue defaultQueue() {
-        return new Queue("DEFAULT"); // Replace "default_queue" with your desired name
+        return QueueBuilder.durable(properties.getQueue().getDefaultQueue()).build();
     }
 
     @Bean
@@ -87,7 +108,11 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue ticketanalysisQueue() {
-        return new Queue(properties.getQueue().getTicketanalysis());
+        return QueueBuilder.durable(properties.getQueue().getTicketanalysis())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -100,7 +125,11 @@ public class RabbitMqConfig {
 
     @Bean
     public Queue sitemanagerQueue() {
-        return new Queue(properties.getQueue().getSitemanager());
+        return QueueBuilder.durable(properties.getQueue().getSitemanager())
+                .ttl(120000) // 2 minutes TTL
+                .deadLetterExchange("dead_letter_exchange")
+                .deadLetterRoutingKey("unconsumedmessagesRoutingKey")
+                .build();
     }
 
     @Bean
@@ -110,15 +139,29 @@ public class RabbitMqConfig {
                 .to(topicExchange())
                 .with(properties.getRoutingKey().getSitemanager());
     }
+
     @Bean
-    public MessageConverter messageConverter(){
+    public Queue unconsumedmessagesQueue() {
+        return QueueBuilder.durable(properties.getQueue().getUnconsumedmessages()).build();
+    }
+
+    @Bean
+    public Binding unconsumedmessagesBinding() {
+        return BindingBuilder
+                .bind(unconsumedmessagesQueue())
+                .to(deadLetterExchange())
+                .with("unconsumedmessagesRoutingKey");
+    }
+
+    @Bean
+    public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
     @Bean
-    public AmqpTemplate amqpTemplate(ConnectionFactory connectionFactory){
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
-        rabbitTemplate.setMessageConverter(messageConverter());
+        rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;
     }
 }

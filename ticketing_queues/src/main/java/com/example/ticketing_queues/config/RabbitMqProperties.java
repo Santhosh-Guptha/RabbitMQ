@@ -26,7 +26,8 @@ public class RabbitMqProperties {
         private String fieldrepresentative;
         private String defaultQueue;
         private String ticketanalysis;
-        private String sitemanager;  // Added new queue
+        private String sitemanager;
+        private String unconsumedmessages;  // Added new queue
     }
 
     @Data
@@ -37,6 +38,7 @@ public class RabbitMqProperties {
         private String fieldrepresentative;
         private String defaultRoutingKey;
         private String ticketanalysis;
-        private String sitemanager;  // Added new routing key
+        private String sitemanager;
+        private String unconsumedmessages;  // Added new routing key
     }
 }

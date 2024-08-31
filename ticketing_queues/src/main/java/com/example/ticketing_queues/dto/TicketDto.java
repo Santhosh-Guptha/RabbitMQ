@@ -17,7 +17,6 @@ public class TicketDto {
     private String priority;
     private String status;
     private LocalDateTime createdTime;
-    private LocalDateTime updatedTime;
     private String queue;
     private String description;
 }
